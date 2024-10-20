@@ -182,21 +182,29 @@ else:
     print(f'total number of parameters: {total_params}')
 
     with torch.no_grad():
-        # prompt = "I am lucky to love you baby <eol> I am lucky to have known you <eol> I am lucky to have you I am lucky to have seen these days <eol> baby I will always"
-        prompt = "I try to tell her , I try and tell her that she is smart and that she can try and have some trust in her but so far it hasn't really been"
-        # prompt = "I should eat something only if I am hungry and I should eat something that is healthy and I should eat something that is good for me and I should eat something that is good for my body"
-        tokens = corpus.dictionary.encode(prompt.split()[:context_length])
-        generate_length = 100
-        for _ in range(generate_length):
-            _input = torch.tensor(tokens[len(tokens)-context_length:], dtype=torch.long)
-            _input = _input.view(1,context_length).to(device)
-            out = model(_input)
-            B, T, C = out.shape # expecting B to be 1
-            out = out.view(T, C)
-            out = F.softmax(out, dim=-1)
-            #print(f'out shape {out.shape}')
-            prev_token = torch.multinomial(out[0,:], 1)
-            #print(f'{corpus.dictionary.decode([prev_token.item()])}')
-            nxt_token = torch.multinomial(out[-1,:], 1)
-            tokens.append(nxt_token.item())
-        print(corpus.dictionary.decode(tokens))
+        prompts = [
+            "I try to tell her , I try and tell her that she is smart and that she can try and have some trust in her but so far it hasn't really been",
+            # "I should eat something only if I am hungry and I should eat something that is healthy and I should eat something that is good for me and I should eat something that",
+            "He was taking a very long walk in the park and he was enjoying the fresh air and was in love with the beauty of the trees and the flowers and the birds and the"
+
+        ]
+        for prompt in prompts:
+            # prompt = "I am lucky to love you baby <eol> I am lucky to have known you <eol> I am lucky to have you I am lucky to have seen these days <eol> baby I will always"
+            tokens = corpus.dictionary.encode(prompt.split()[:context_length])
+            generate_length = 10
+            for _ in range(generate_length):
+                _input = torch.tensor(tokens[len(tokens)-context_length:], dtype=torch.long)
+                _input = _input.view(1,context_length).to(device)
+                out = model(_input)
+                B, T, C = out.shape # expecting B to be 1
+                out = out.view(T, C)
+                out = F.softmax(out, dim=-1)
+                #print(f'out shape {out.shape}')
+                #prev_token = torch.multinomial(out[0,:], 1)
+                #print(f'{corpus.dictionary.decode([prev_token.item()])}')
+                #nxt_token = torch.multinomial(out[-1,:], 1)
+                nxt_token = torch.argmax(out[-1,:])
+                tokens.append(nxt_token.item())
+            print('\n')
+            print(corpus.dictionary.decode(tokens))
+            print('\n')
